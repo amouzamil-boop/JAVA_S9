@@ -67,14 +67,19 @@ public class Interface extends Application {
     }
 
     private void handleMouseClicked(MouseEvent event) {
-        if (event.getButton() != MouseButton.SECONDARY) {
-            return;
-        }
+        System.out.println("handleMouseClicked - button=" + event.getButton());
+        // Pour faciliter les tests, on accepte aussi le clic gauche (PRIMARY)
+        // if (event.getButton() != MouseButton.SECONDARY) {
+        //     System.out.println("Clic ignoré (pas bouton secondaire).");
+        //     return;
+        // }
         Point2D tex = event.getPickResult().getIntersectedTexCoord();
         if (tex == null) {
             System.out.println("Aucune intersection avec la sphère.");
             return;
         }
+
+        System.out.println("TexCoords: x=" + tex.getX() + " y=" + tex.getY());
 
         double theta = 180d * (0.5d - tex.getY());
         double phi = 360d * (tex.getX() - 0.5d);
@@ -91,24 +96,15 @@ public class Interface extends Application {
     }
 
     private void fetchFlights(String arrivalIata) {
-        String apiKey = System.getenv().getOrDefault("AVIATIONSTACK_KEY", "VOTRE_CLE");
+        // Clé API AviationStack fournie pour ce TP (usage pédagogique uniquement)
+        String apiKey = "3930019efe1856dc0079ad6876aff936";
 
         Runnable task = () -> {
             String json;
-            if ("VOTRE_CLE".equals(apiKey)) {
-                System.out.println("Clé API manquante, utilisation du fichier de test.");
-                try {
-                    json = Files.readString(Paths.get(SAMPLE_JSON_PATH));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    return;
-                }
-            } else {
-                String url = "http://api.aviationstack.com/v1/flights?access_key=" + apiKey + "&arr_iata=" + arrivalIata;
-                json = httpGet(url);
-                if (json == null) {
-                    return;
-                }
+            String url = "http://api.aviationstack.com/v1/flights?access_key=" + apiKey + "&arr_iata=" + arrivalIata;
+            json = httpGet(url);
+            if (json == null) {
+                return;
             }
 
             JsonFlightFiller filler = new JsonFlightFiller(json, world);

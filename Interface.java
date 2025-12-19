@@ -14,6 +14,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 
 /**
  * Interface JavaFX principale.
@@ -67,12 +68,15 @@ public class Interface extends Application {
     }
 
     private void handleMouseClicked(MouseEvent event) {
-        System.out.println("handleMouseClicked - button=" + event.getButton());
-        // Pour faciliter les tests, on accepte aussi le clic gauche (PRIMARY)
-        // if (event.getButton() != MouseButton.SECONDARY) {
-        //     System.out.println("Clic ignoré (pas bouton secondaire).");
-        //     return;
-        // }
+        System.out.println("handleMouseClicked appelé - button=" + event.getButton());
+        
+        // Après la sélection d'un aéroport par clic droit sur le globe
+        // Sur macOS, le clic droit peut être détecté différemment, on accepte aussi PRIMARY pour les tests
+        if (event.getButton() != MouseButton.SECONDARY && event.getButton() != MouseButton.PRIMARY) {
+            System.out.println("Clic ignoré (ni PRIMARY ni SECONDARY).");
+            return;
+        }
+        
         Point2D tex = event.getPickResult().getIntersectedTexCoord();
         if (tex == null) {
             System.out.println("Aucune intersection avec la sphère.");
@@ -84,6 +88,8 @@ public class Interface extends Application {
         double theta = 180d * (0.5d - tex.getY());
         double phi = 360d * (tex.getX() - 0.5d);
 
+        System.out.println("Coordonnées calculées: theta=" + theta + " phi=" + phi);
+
         Aeroport nearest = world.findNearestAirport(phi, theta);
         if (nearest == null) {
             System.out.println("Aucun aéroport trouvé.");
@@ -92,6 +98,7 @@ public class Interface extends Application {
 
         System.out.println("Aéroport sélectionné: " + nearest);
         earth.displayRedSphere(nearest);
+        System.out.println("Sphère rouge affichée, récupération des vols...");
         fetchFlights(nearest.getIATA());
     }
 
@@ -107,28 +114,46 @@ public class Interface extends Application {
                 return;
             }
 
+            System.out.println("JSON reçu, longueur: " + json.length() + " caractères");
             JsonFlightFiller filler = new JsonFlightFiller(json, world);
-            filler.getList().forEach(flight -> {
-                Aeroport dep = flight.getDepartureAirport();
-                if (dep != null) {
-                    earth.displayYellowSphere(dep);
-                }
-            });
+            ArrayList<Flight> flights = filler.getList();
+            System.out.println("Nombre de vols trouvés: " + flights.size());
+            
+            if (flights.isEmpty()) {
+                System.out.println("Aucun vol trouvé. Vérifiez le parsing JSON.");
+            } else {
+                flights.forEach(flight -> {
+                    Aeroport dep = flight.getDepartureAirport();
+                    if (dep != null) {
+                        System.out.println("Affichage sphère jaune pour: " + dep.getIATA());
+                        earth.displayYellowSphere(dep);
+                    } else {
+                        System.out.println("Aéroport de départ non trouvé pour le code: " + flight.getDepartureIata());
+                    }
+                });
+            }
         };
         new Thread(task, "aviationstack-fetch").start();
     }
 
     private String httpGet(String url) {
         try {
+            System.out.println("Envoi de la requête HTTP vers: " + url);
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .GET()
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            System.out.println("Réponse HTTP reçue, code: " + response.statusCode());
+            if (response.statusCode() != 200) {
+                System.err.println("Erreur HTTP: " + response.statusCode() + " - " + response.body());
+                return null;
+            }
             return response.body();
         } catch (Exception e) {
             System.err.println("Erreur lors de l'appel HTTP: " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
     }

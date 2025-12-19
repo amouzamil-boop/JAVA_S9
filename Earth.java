@@ -17,17 +17,25 @@ public class Earth extends Group {
 
     private final Sphere sphere;
     private final Rotate rotationY;
+    private final Group rotatingGroup; // Groupe qui contient la Terre et toutes les sphères d'aéroports
 
     public Earth() {
-        sphere = new Sphere(RADIUS);
+        // Créer un groupe qui tournera avec la Terre
+        rotatingGroup = new Group();
         rotationY = new Rotate(0, Rotate.Y_AXIS);
-        sphere.getTransforms().add(rotationY);
-
+        rotatingGroup.getTransforms().add(rotationY);
+        
+        sphere = new Sphere(RADIUS);
         PhongMaterial material = new PhongMaterial();
         material.setDiffuseMap(loadTexture());
         sphere.setMaterial(material);
 
-        this.getChildren().add(sphere);
+        // Ajouter la sphère principale au groupe rotatif
+        rotatingGroup.getChildren().add(sphere);
+        
+        // Ajouter le groupe rotatif au groupe principal
+        this.getChildren().add(rotatingGroup);
+        
         startRotation();
     }
 
@@ -69,6 +77,8 @@ public class Earth extends Group {
         sp.setTranslateX(x);
         sp.setTranslateY(y);
         sp.setTranslateZ(z);
+        
+        // Les sphères seront ajoutées au groupe rotatif, donc elles tourneront automatiquement avec la Terre
         return sp;
     }
 
@@ -76,14 +86,14 @@ public class Earth extends Group {
         if (a == null) {
             return;
         }
-        Platform.runLater(() -> this.getChildren().add(createSphere(a, Color.RED)));
+        Platform.runLater(() -> rotatingGroup.getChildren().add(createSphere(a, Color.RED)));
     }
 
     public void displayYellowSphere(Aeroport a) {
         if (a == null) {
             return;
         }
-        Platform.runLater(() -> this.getChildren().add(createSphere(a, Color.GOLD)));
+        Platform.runLater(() -> rotatingGroup.getChildren().add(createSphere(a, Color.GOLD)));
     }
 
     public Sphere getSphere() {

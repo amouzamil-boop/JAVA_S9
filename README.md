@@ -46,5 +46,19 @@ Lancement de l'application validé : la Terre s'affiche avec sa texture et tourn
 Prochaines étapes
 Implémenter le "Picking" (clic souris sur le globe) : convertir les coordonnées 2D de l'écran en coordonnées géographiques (Latitude/Longitude) pour identifier et afficher l'aéroport sélectionné.
 
+TP3
+Objectif : Rendre le globe interactif (clic souris) et connecter l'application à des données de vol réelles via une API.
+
+Environnement : Ajout de la bibliothèque de parsing JSON au projet. Obtention et configuration de la clé API (Access Key) sur le site aviationstack.
+
+Développement réalisé :
+Interaction : Mise en place de la détection du clic droit sur la sphère (PickResult) pour récupérer les coordonnées sur la texture.
+Conversion : Codage des formules mathématiques pour transformer les coordonnées du clic en Latitude/Longitude, et inversement pour placer des objets 3D sur le globe.
+
+API : Création de la classe JsonFlightFiller pour lire les données reçues. Intégration de la clé API dans le code pour interroger le serveur.
+Visuel : Affichage dynamique d'une sphère rouge sur l'aéroport le plus proche de la zone cliquée.
+Problème rencontré et résolution : Nous n'arrivions pas à voir si les clics étaient détectés sur la carte 3D. Nous avons ajouté une ligne de log (print) pour tester l'événement du clic, ce qui nous a permis de valider l'interaction avant de finaliser le calcul de position.
+Tests effectués : Clic sur une zone connue (France) pour vérifier que l'aéroport retourné est cohérent (CDG/ORY). Vérification que la clé API fonctionne et renvoie bien la liste des vols alentours.
+Prochaines étapes : Afficher les aéroports de destination (sphères jaunes) et gérer la requête API dans un processus séparé (Thread/Runnable) pour éviter que l'application ne se fige pendant le chargement des données.
 
 
